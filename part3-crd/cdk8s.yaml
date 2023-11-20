@@ -1,0 +1,7 @@
+language: java
+app: mvn exec:java -Dexec.mainClass="com.mycompany.app.Main"
+imports:
+  - k8s
+  - https://raw.githubusercontent.com/kubernetes/sample-controller/master/artifacts/examples/crd.yaml
+  - https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/main/install/cluster-operator/040-Crd-kafka.yaml
+  - kafkatopic:=https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/main/install/cluster-operator/043-Crd-kafkatopic.yaml

@@ -1,0 +1,6 @@
+language: java
+app: mvn exec:java -Dexec.mainClass="com.mycompany.app.MyChart"
+imports:
+  - k8s
+  - https://raw.githubusercontent.com/aws-controllers-k8s/community/df6183acdc5b9b8508ea2fc8ec8c39fd19301ac6/services/dynamodb/config/crd/bases/dynamodb.services.k8s.aws_tables.yaml
+  - https://raw.githubusercontent.com/aws-controllers-k8s/dynamodb-controller/main/config/crd/common/bases/services.k8s.aws_fieldexports.yaml
