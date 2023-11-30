@@ -1,0 +1,94 @@
+{{- if .Values.persistentVolumes.create -}}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+ name: {{ .Release.Name }}-mysql-pv
+ namespace: mca-app
+ labels:
+   app: {{ .Release.Name }}-mysql
+   type: local
+spec:
+  {{- if .Values.persistentVolumes.enableStorageClass }}
+  storageClassName: {{ .Release.Name }}-{{ .Values.persistentVolumes.storageClasses.mysql }}
+  {{- end }}
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/db/{{ .Release.Name }}-mysql"
+  capacity:
+    storage: 3Gi
+---
+{{- if .Values.persistentVolumes.enableStorageClass }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-mysql-pvc
+  namespace: mca-app
+  labels:
+    app: {{ .Release.Name }}-mysql
+spec:
+  storageClassName: {{ .Release.Name }}-{{ .Values.persistentVolumes.storageClasses.mysql }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+{{- end }}
+{{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-mysql-deployment
+  namespace: mca-app
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-mysql
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-mysql
+    spec:
+      containers:
+      - name: {{ .Release.Name }}-mysql
+        image: {{ .Values.services.mysql.image }}:{{ .Values.services.mysql.tag }}
+        ports:
+          - containerPort: 3306
+        env: 
+        - name: MYSQL_DATABASE
+          value: database
+        - name: MYSQL_USER
+          value: {{ .Values.services.mysql.username }}
+        - name: MYSQL_ROOT_PASSWORD
+          value: mypassword
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-mysql-secret
+              key: password
+        volumeMounts:
+        - name: {{ .Release.Name }}-mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: {{ .Release.Name }}-mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-mysql-pvc
+---
+apiVersion: v1 
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-mysql
+  namespace: mca-app
+  labels:
+    app: {{ .Release.Name }}-mysql
+spec:
+  ports:
+  - name: {{ .Release.Name }}-sql
+    protocol: TCP
+    port: 3306
+    targetPort: 3306
+  selector:
+    app: {{ .Release.Name }}-mysql
+  type: ClusterIP

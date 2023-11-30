@@ -1,4 +1,10 @@
 language: java
 app:  mvn exec:java -Dexec.mainClass="com.mycompany.app.NginxChart"
+validations:
+  - package: '@datreeio/datree-cdk8s'
+    class: DatreeValidation
+    version: 1.3.5
+    properties:
+      policy: cdk8s
 imports:
   - k8s

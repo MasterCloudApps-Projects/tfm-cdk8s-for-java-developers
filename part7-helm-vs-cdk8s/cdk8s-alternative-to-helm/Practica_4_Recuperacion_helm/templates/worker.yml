@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-worker-deployment
+  namespace: mca-app
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-worker
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-worker
+    spec:
+      securityContext:
+        runAsUser: 1001
+      containers:
+      - name: worker
+        image: {{ .Values.services.worker.image }}:{{ .Values.services.worker.tag }}
+        env:
+        - name: RABBITMQ_SERVER
+          value: {{ .Release.Name }}-rabbitmq
+        - name: UPPERCASE_GRPC_SERVER
+          value: static://{{ .Release.Name }}-external-service:9090
+        - name: MYSQL_SERVER
+          value: {{ .Release.Name }}-mysql
+        - name: MYSQL_DATABASE
+          value: database
+        - name: MYSQL_USER
+          value: {{ .Values.services.mysql.username }}
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-mysql-secret
+              key: password
+        securityContext:
+            allowPrivilegeEscalation: false

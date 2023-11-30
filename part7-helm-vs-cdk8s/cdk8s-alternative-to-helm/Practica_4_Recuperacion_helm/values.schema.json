@@ -1,0 +1,451 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "http://example.com/example.json",
+  "type": "object",
+  "default": {},
+  "title": "Root Schema",
+  "required": [
+    "ingress",
+    "persistentVolumes",
+    "networkPolicies",
+    "services"
+  ],
+  "properties": {
+    "ingress": {
+      "type": "object",
+      "default": {},
+      "title": "The ingress Schema",
+      "required": [
+        "enabled",
+        "host",
+        "serviceType"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enabled Schema",
+          "examples": [
+            true
+          ]
+        },
+        "host": {
+          "type": "string",
+          "default": "",
+          "title": "The host Schema",
+          "examples": [
+            "cluster-ip"
+          ]
+        },
+        "serviceType": {
+          "type": "string",
+          "default": "",
+          "title": "The serviceType Schema",
+          "examples": [
+            "NodePort"
+          ]
+        }
+      },
+      "examples": [{
+        "enabled": true,
+        "host": "cluster-ip",
+        "serviceType": "NodePort"
+      }]
+    },
+    "persistentVolumes": {
+      "type": "object",
+      "default": {},
+      "title": "The persistentVolumes Schema",
+      "required": [
+        "create",
+        "enableStorageClass",
+        "storageClasses"
+      ],
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "default": false,
+          "title": "The create Schema",
+          "examples": [
+            true
+          ]
+        },
+        "enableStorageClass": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enableStorageClass Schema",
+          "examples": [
+            true
+          ]
+        },
+        "storageClasses": {
+          "type": "object",
+          "default": {},
+          "title": "The storageClasses Schema",
+          "required": [
+            "mysql",
+            "mongo",
+            "rabbit"
+          ],
+          "properties": {
+            "mysql": {
+              "type": "string",
+              "default": "",
+              "title": "The mysql Schema",
+              "examples": [
+                "mysql"
+              ]
+            },
+            "mongo": {
+              "type": "string",
+              "default": "",
+              "title": "The mongo Schema",
+              "examples": [
+                "mongodb"
+              ]
+            },
+            "rabbit": {
+              "type": "string",
+              "default": "",
+              "title": "The rabbit Schema",
+              "examples": [
+                "rabbitmq"
+              ]
+            }
+          },
+          "examples": [{
+            "mysql": "mysql",
+            "mongo": "mongodb",
+            "rabbit": "rabbitmq"
+          }]
+        }
+      },
+      "examples": [{
+        "create": true,
+        "enableStorageClass": true,
+        "storageClasses": {
+          "mysql": "mysql",
+          "mongo": "mongodb",
+          "rabbit": "rabbitmq"
+        }
+      }]
+    },
+    "networkPolicies": {
+      "type": "object",
+      "default": {},
+      "title": "The networkPolicies Schema",
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enabled Schema",
+          "examples": [
+            false
+          ]
+        }
+      },
+      "examples": [{
+        "enabled": false
+      }]
+    },
+    "services": {
+      "type": "object",
+      "default": {},
+      "title": "The services Schema",
+      "required": [
+        "mongodb",
+        "mysql",
+        "rabbitmq",
+        "server",
+        "worker",
+        "external"
+      ],
+      "properties": {
+        "mongodb": {
+          "type": "object",
+          "default": {},
+          "title": "The mongodb Schema",
+          "required": [
+            "image",
+            "tag"
+          ],
+          "properties": {
+            "image": {
+              "type": "string",
+              "default": "",
+              "title": "The image Schema",
+              "examples": [
+                "mongo"
+              ]
+            },
+            "tag": {
+              "type": "string",
+              "default": "",
+              "title": "The tag Schema",
+              "examples": [
+                "4.2.3"
+              ]
+            }
+          },
+          "examples": [{
+            "image": "mongo",
+            "tag": "4.2.3"
+          }]
+        },
+        "mysql": {
+          "type": "object",
+          "default": {},
+          "title": "The mysql Schema",
+          "required": [
+            "image",
+            "tag",
+            "username",
+            "password"
+          ],
+          "properties": {
+            "image": {
+              "type": "string",
+              "default": "",
+              "title": "The image Schema",
+              "examples": [
+                "mysql"
+              ]
+            },
+            "tag": {
+              "type": "string",
+              "default": "",
+              "title": "The tag Schema",
+              "examples": [
+                "8"
+              ]
+            },
+            "username": {
+              "type": "string",
+              "default": "",
+              "title": "The username Schema",
+              "examples": [
+                "myuser"
+              ]
+            },
+            "password": {
+              "type": "null",
+              "default": null,
+              "title": "The password Schema",
+              "examples": [
+                null
+              ]
+            }
+          },
+          "examples": [{
+            "image": "mysql",
+            "tag": "8",
+            "username": "myuser",
+            "password": null
+          }]
+        },
+        "rabbitmq": {
+          "type": "object",
+          "default": {},
+          "title": "The rabbitmq Schema",
+          "required": [
+            "image",
+            "tag"
+          ],
+          "properties": {
+            "image": {
+              "type": "string",
+              "default": "",
+              "title": "The image Schema",
+              "examples": [
+                "fjvela/urjc-fjvela-rabbitmq"
+              ]
+            },
+            "tag": {
+              "type": "string",
+              "default": "",
+              "title": "The tag Schema",
+              "examples": [
+                "1.0.0"
+              ]
+            }
+          },
+          "examples": [{
+            "image": "fjvela/urjc-fjvela-rabbitmq",
+            "tag": "1.0.0"
+          }]
+        },
+        "server": {
+          "type": "object",
+          "default": {},
+          "title": "The server Schema",
+          "required": [
+            "image",
+            "tag"
+          ],
+          "properties": {
+            "image": {
+              "type": "string",
+              "default": "",
+              "title": "The image Schema",
+              "examples": [
+                "fjvela/urjc-fjvela-server"
+              ]
+            },
+            "tag": {
+              "type": "string",
+              "default": "",
+              "title": "The tag Schema",
+              "examples": [
+                "1.0.5"
+              ]
+            }
+          },
+          "examples": [{
+            "image": "fjvela/urjc-fjvela-server",
+            "tag": "1.0.5"
+          }]
+        },
+        "worker": {
+          "type": "object",
+          "default": {},
+          "title": "The worker Schema",
+          "required": [
+            "image",
+            "tag"
+          ],
+          "properties": {
+            "image": {
+              "type": "string",
+              "default": "",
+              "title": "The image Schema",
+              "examples": [
+                "torrespro/mca-worker"
+              ]
+            },
+            "tag": {
+              "type": "string",
+              "default": "",
+              "title": "The tag Schema",
+              "examples": [
+                "2.0.0"
+              ]
+            }
+          },
+          "examples": [{
+            "image": "torrespro/mca-worker",
+            "tag": "2.0.0"
+          }]
+        },
+        "external": {
+          "type": "object",
+          "default": {},
+          "title": "The external Schema",
+          "required": [
+            "image",
+            "tag"
+          ],
+          "properties": {
+            "image": {
+              "type": "string",
+              "default": "",
+              "title": "The image Schema",
+              "examples": [
+                "fjvela/urjc-fjvela-external-service"
+              ]
+            },
+            "tag": {
+              "type": "string",
+              "default": "",
+              "title": "The tag Schema",
+              "examples": [
+                "1.0.1"
+              ]
+            }
+          },
+          "examples": [{
+            "image": "fjvela/urjc-fjvela-external-service",
+            "tag": "1.0.1"
+          }]
+        }
+      },
+      "examples": [{
+        "mongodb": {
+          "image": "mongo",
+          "tag": "4.2.3"
+        },
+        "mysql": {
+          "image": "mysql",
+          "tag": "8",
+          "username": "myuser",
+          "password": null
+        },
+        "rabbitmq": {
+          "image": "fjvela/urjc-fjvela-rabbitmq",
+          "tag": "1.0.0"
+        },
+        "server": {
+          "image": "fjvela/urjc-fjvela-server",
+          "tag": "1.0.5"
+        },
+        "worker": {
+          "image": "torrespro/mca-worker",
+          "tag": "2.0.0"
+        },
+        "external": {
+          "image": "fjvela/urjc-fjvela-external-service",
+          "tag": "1.0.1"
+        }
+      }]
+    }
+  },
+  "examples": [{
+    "ingress": {
+      "enabled": true,
+      "host": "cluster-ip",
+      "serviceType": "NodePort"
+    },
+    "persistentVolumes": {
+      "create": true,
+      "enableStorageClass": true,
+      "storageClasses": {
+        "mysql": "mysql",
+        "mongo": "mongodb",
+        "rabbit": "rabbitmq"
+      }
+    },
+    "networkPolicies": {
+      "enabled": false
+    },
+    "services": {
+      "mongodb": {
+        "image": "mongo",
+        "tag": "4.2.3"
+      },
+      "mysql": {
+        "image": "mysql",
+        "tag": "8",
+        "username": "myuser",
+        "password": null
+      },
+      "rabbitmq": {
+        "image": "fjvela/urjc-fjvela-rabbitmq",
+        "tag": "1.0.0"
+      },
+      "server": {
+        "image": "fjvela/urjc-fjvela-server",
+        "tag": "1.0.5"
+      },
+      "worker": {
+        "image": "torrespro/mca-worker",
+        "tag": "2.0.0"
+      },
+      "external": {
+        "image": "fjvela/urjc-fjvela-external-service",
+        "tag": "1.0.1"
+      }
+    }
+  }]
+}
