@@ -1,10 +1,12 @@
 package com.mycompany.app;
 
+import org.cdk8s.plus25.*;
 import software.constructs.Construct;
 
 import org.cdk8s.App;
 import org.cdk8s.Chart;
-import org.cdk8s.ChartProps;
+
+import java.util.List;
 
 public class MCATaskManagerChart extends Chart
 {
@@ -13,78 +15,85 @@ public class MCATaskManagerChart extends Chart
         this(scope, id, null);
     }
 
-    public MCATaskManagerChart(final Construct scope, final String id, final ChartProps options) {
-        super(scope, id, options);
+    public MCATaskManagerChart(final Construct scope, final String id, final MCATaskManagerChartOptions MCATaskManagerChartOptions) {
+        super(scope, id, MCATaskManagerChartOptions);
 
         // define resources here
 
-        ChartOptions chartOptions = new ChartOptions();
-
-        chartOptions.ingressEnabled = true;
-        chartOptions.ingressHost = "cluster-ip";
-        chartOptions.ingressServiceType = "NodePort";
-        chartOptions.persistentVolumesCreate = true;
-        chartOptions.persistentVolumesEnableStorageClass = true;
-        chartOptions.persistentVolumesStorageClassesMysql = "mysql";
-        chartOptions.persistentVolumesStorageClassesMongo = "mongodb";
-        chartOptions.persistentVolumesStorageClassesRabbit = "rabbitmq";
-        chartOptions.networkPoliciesEnabled = false;
-        chartOptions.servicesMongodbImage = "mongo";
-        chartOptions.servicesMongodbTag = "4.2.3";
-        chartOptions.servicesMysqlImage = "mysql";
-        chartOptions.servicesMysqlTag = "8";
-        chartOptions.servicesMysqlUsername = "myuser";
-        chartOptions.servicesMysqlPassword = "";
-        chartOptions.servicesRabbitmqImage = "fjvela/urjc-fjvela-rabbitmq";
-        chartOptions.servicesRabbitmqTag = "1.0.0";
-        chartOptions.servicesServerImage = "fjvela/urjc-fjvela-server";
-        chartOptions.servicesServerTag = "1.0.5";
-        chartOptions.servicesWorkerImage = "torrespro/mca-worker";
-        chartOptions.servicesWorkerTag = "2.0.0";
-        chartOptions.servicesExternalImage = "fjvela/urjc-fjvela-external-service";
-        chartOptions.servicesExternalTag = "1.0.1";
-
-        new WebService(this, "rabbitmq", WebServiceProps.builder()
+        WebService rabbitmq = new WebService(this, "rabbitmq", WebServiceProps.builder()
                 .image("fjvela/urjc-fjvela-rabbitmq")
                 .tag("1.0.0")
+                .port(List.of(5672))
                 .replicas(2)
                 .build());
 
-        new WebService(this, "mysql", WebServiceProps.builder()
+        Database mysql = new Database(this, "mysql", DatabaseProps.builder()
                 .image("mysql")
                 .tag("8")
+                .port(List.of(3306))
                 .replicas(2)
+                .password("password")
                 .build());
 
-        new WebService(this, "mongodb", WebServiceProps.builder()
+        mysql.getDeployment().getContainers().getFirst().getEnv().addVariable("MYSQL_DATABASE", EnvValue.fromValue("database"));
+        mysql.getDeployment().getContainers().getFirst().getEnv().addVariable("MYSQL_USER", EnvValue.fromValue("username"));
+        mysql.getDeployment().getContainers().getFirst().getEnv().addVariable("MYSQL_ROOT_PASSWORD", EnvValue.fromValue("mypassword"));
+        mysql.getDeployment().getContainers().getFirst().getEnv().addVariable("MYSQL_PASSWORD", EnvValue.fromSecretValue(SecretValue.builder()
+                .secret(mysql.getSecret())
+                .key("password")
+                .build()));
+
+        Database mongodb = new Database(this, "mongodb", DatabaseProps.builder()
                 .image("mongo")
                 .tag("423")
+                .port(List.of(27017, 27018, 27019))
                 .replicas(2)
+                .password("passwordMongo")
                 .build());
 
-        new WebService(this, "server", WebServiceProps.builder()
+        WebService server = new WebService(this, "server", WebServiceProps.builder()
                 .image("fjvela/urjc-fjvela-server")
                 .tag("1.0.5")
-                .containerPort(2368)
+                .port(List.of(8080))
+                .ingressEnabled(true)
                 .build());
 
-        new WebService(this, "worker", WebServiceProps.builder()
+        WebService worker = new WebService(this, "worker", WebServiceProps.builder()
                 .image("torrespro/mca-worker")
                 .tag("2.0.0")
                 .replicas(2)
                 .build());
 
-        new WebService(this, "external", WebServiceProps.builder()
+        WebService external = new WebService(this, "external", WebServiceProps.builder()
                 .image("urjc-fjvela-external-service")
                 .tag("1.0.1")
-                .containerPort(2368)
+                .port(List.of(9090))
                 .build());
+
+        if (MCATaskManagerChartOptions.isNetworkPoliciesEnabled()) {
+
+            NetworkPolicy.Builder.create(this, "policyDenyAll")
+                    .ingress(NetworkPolicyTraffic.builder().defaultValue(NetworkPolicyTrafficDefault.DENY).build())
+                    .egress(NetworkPolicyTraffic.builder().defaultValue(NetworkPolicyTrafficDefault.DENY).build())
+                    .build();
+
+            //worker allow rabbit
+            worker.getDeployment().getConnections().allowTo(rabbitmq.getDeployment());
+            worker.getDeployment().getConnections().allowTo(mysql.getDeployment());
+            rabbitmq.getDeployment().getConnections().allowFrom(server.getDeployment());
+            mongodb.getDeployment().getConnections().allowFrom(server.getDeployment());
+            external.getDeployment().getConnections().allowTo(worker.getDeployment());
+
+        }
 
     }
 
     public static void main(String[] args) {
         final App app = new App();
-        new MCATaskManagerChart(app, "cdk8s-alternative-to-helm");
+        MCATaskManagerChartOptions mcaTaskManagerChartOptions = MCATaskManagerChartOptions.builder()
+                .networkPoliciesEnabled(false)
+                .build();
+        new MCATaskManagerChart(app, "cdk8s-alternative-to-helm", mcaTaskManagerChartOptions);
         app.synth();
     }
 }

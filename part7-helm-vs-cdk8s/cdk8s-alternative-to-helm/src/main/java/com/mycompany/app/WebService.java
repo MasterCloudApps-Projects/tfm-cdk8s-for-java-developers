@@ -1,14 +1,19 @@
 package com.mycompany.app;
 
 import org.cdk8s.ApiObjectMetadata;
-import org.cdk8s.plus27.*;
-import org.cdk8s.plus27.ContainerPort;
-import org.cdk8s.plus27.ServicePort;
+import org.cdk8s.plus25.*;
+import org.cdk8s.plus25.ContainerPort;
+import org.cdk8s.plus25.ServicePort;
+import org.jetbrains.annotations.NotNull;
 import software.constructs.Construct;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class WebService extends Construct {
+
+    private Deployment deployment;
 
     public WebService(final Construct scope, final String id) {
         this(scope, id, null);
@@ -17,64 +22,82 @@ public class WebService extends Construct {
     public WebService(final Construct scope, final String id, final WebServiceProps props) {
         super(scope, id);
 
-
-//        Map<String, String> label = Collections.singletonMap("app", Names.toLabelValue(this));
-
-//        new KubeService(this, "service", KubeServiceProps.builder()
-//                .spec(ServiceSpec.builder()
-//                        .type("LoadBalancer")
-//                        .ports(List.of(ServicePort.builder()
-//                                .port(props.getPort())
-//                                .targetPort(IntOrString.fromNumber(props.getContainerPort()))
-//                                .build()))
-//                        .selector(label)
-//                        .build())
-//                .build());
-//
-//        new KubeDeployment(this, "deployment", KubeDeploymentProps.builder()
-//                .spec(DeploymentSpec.builder()
-//                        .replicas(props.getReplicas())
-//                        .selector(LabelSelector.builder()
-//                                .matchLabels(label)
-//                                .build())
-//                        .template(PodTemplateSpec.builder()
-//                                .metadata(ObjectMeta.builder()
-//                                        .labels(label)
-//                                        .build())
-//                                .spec(PodSpec.builder()
-//                                        .containers(List.of(Container.builder()
-//                                                        .name("web")
-//                                                        .image(props.getImage())
-//                                                        .ports(List.of(ContainerPort.builder()
-//                                                                        .containerPort(props.getContainerPort())
-//                                                                .build()))
-//                                                .build()))
-//                                        .build())
-//                                .build())
-//                        .build())
-//                .build());
-
-        Deployment deployment = new Deployment(this, "deployment", new DeploymentProps.Builder()
+        Deployment deployment = new Deployment(this, "deployment", DeploymentProps.builder()
                 .metadata(new ApiObjectMetadata.Builder()
                         .name("deployment")
                         .build())
                 .build());
 
+        deployment.addContainer(getContainer(props));
 
-        deployment.addContainer(new ContainerProps.Builder()
-                .name("container")
-                .image(props.getImage()+props.getTag())
-                .ports(List.of(ContainerPort.builder().number(props.getContainerPort()).build()))
-                .build());
+        if (props.getPort() != null) {
+            deployment.exposeViaService(new DeploymentExposeViaServiceOptions.Builder()
+                    .name("service")
+                    .serviceType(ServiceType.CLUSTER_IP)
+                    .ports(transformToServicePorts(props.getPort()))
+                    .build());
+        }
 
-        deployment.exposeViaService(new DeploymentExposeViaServiceOptions.Builder()
-                .name("service")
-                .serviceType(ServiceType.LOAD_BALANCER)
-                .ports(List.of(new ServicePort.Builder()
-                        .port(props.getPort())
-                        .targetPort(props.getContainerPort())
-                        .build()))
-                .build());
+        if (props.isIngressEnabled()) {
+            deployment.exposeViaIngress("/(.*)", ExposeDeploymentViaIngressOptions.builder()
+                    .ingress(Ingress.Builder.create(this, "ingress").metadata(new ApiObjectMetadata.Builder()
+                                    .name("multi-ingress")
+                                    .annotations(Map.of("nginx.ingress.kubernetes.io/rewrite-target", "/$1"))
+                                    .build())
+                            .build())
+                    .pathType(HttpIngressPathType.IMPLEMENTATION_SPECIFIC)
+                    .build());
+        }
+
+        this.deployment = deployment;
     }
 
+    public static List<ServicePort> transformToServicePorts(List<Integer> ports) {
+        List<ServicePort> servicePorts = new ArrayList<>();
+
+        if (ports != null) {
+            for (Integer port : ports) {
+                ServicePort servicePort = new ServicePort.Builder()
+                        .name("port-" + port)
+                        .port(port)
+                        .targetPort(port)
+                        .build();
+                servicePorts.add(servicePort);
+            }
+        }
+
+        return servicePorts;
+    }
+
+    public static List<ContainerPort> transformToContainerPorts(List<Integer> ports) {
+        List<ContainerPort> containerPorts = new ArrayList<>();
+
+        if (ports != null) {
+            for (Integer port : ports) {
+                ContainerPort containerPort = new ContainerPort.Builder()
+                        .number(port)
+                        .build();
+                containerPorts.add(containerPort);
+            }
+        }
+
+        return containerPorts;
+    }
+
+    @NotNull
+    private static ContainerProps getContainer(WebServiceProps props) {
+        return new ContainerProps.Builder()
+                .name("container")
+                .image(props.getImage() + props.getTag())
+                .ports(transformToContainerPorts(props.getPort()))
+                .build();
+    }
+
+    public Deployment getDeployment() {
+        return deployment;
+    }
+
+    public void setDeployment(Deployment deployment) {
+        this.deployment = deployment;
+    }
 }

@@ -30,6 +30,6 @@ Thank you for installing {{ .Chart.Name }}.
   export URL=$(minikube service {{ .Release.Name }}-server --url -n mca-app)
   echo $URL
 {{- else if contains "ClusterIP" .Values.ingress.serviceType }}
-  The app i4s running with an ClusterIP method. Only you can access to the app inside the cluster.
+  The app is running with an ClusterIP method. Only you can access to the app inside the cluster.
   minikube ssh
 {{- end }}

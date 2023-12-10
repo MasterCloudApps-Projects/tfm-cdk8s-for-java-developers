@@ -1,4 +1,4 @@
 language: java
-app:  mvn exec:java -Dexec.mainClass="com.mycompany.app.Main"
+app:  mvn exec:java -Dexec.mainClass="com.mycompany.app.MCATaskManagerChart"
 imports:
   - k8s

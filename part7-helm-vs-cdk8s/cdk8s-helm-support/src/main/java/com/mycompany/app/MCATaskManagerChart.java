@@ -64,7 +64,7 @@ public class MCATaskManagerChart extends Chart
         );
 
         new Helm(this, "Release", new HelmProps.Builder()
-                .chart("my-chart")
+                .chart("mca-03-02-practica4-recuperacion/Practica_4_Recuperacion_helm")
                 .values(values)
                 .build()
         );
