@@ -1,0 +1,43 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-external-service-deployment
+  namespace: mca-app
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-external-service
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-external-service
+    spec:
+      securityContext:
+        runAsUser: 1001
+      containers:
+      - name: {{ .Release.Name }}-external-service
+        image: {{ .Values.services.external.image }}:{{ .Values.services.external.tag }}
+        ports:
+          - containerPort: 9090
+        securityContext:
+          allowPrivilegeEscalation: false
+---
+apiVersion: v1 
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-external-service
+  namespace: mca-app
+  labels:
+    app: {{ .Release.Name }}-external-service
+spec:
+  ports:
+  - name: {{ .Release.Name }}-external-service-port
+    protocol: TCP
+    port: 9090
+    targetPort: 9090
+  selector:
+    app: {{ .Release.Name }}-external-service
+  type: ClusterIP
+
+

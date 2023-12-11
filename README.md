@@ -14,11 +14,12 @@ Examples of how to use Java to define Kubernetes applications
 - [Extend cdk8s with custom Constructs](part4-custom-construct)
 - [Manage AWS services from Kubernetes](part5-dynamodb-eks-ack-cdk8s)
 - [Combine cdk8s with AWS CDK](part6-cdk-eks-construct)
+- [Helm vs cdk8s](part7-helm-vs-cdk8s)
 
 ## Prerequisites
 
 - AWS account 
-- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html), 
+- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) 
 - [cdk8s CLI ](https://cdk8s.io/docs/latest/getting-started/#install-the-cli) 
 - [kubectl.](https://kubernetes.io/docs/tasks/tools/#kubectl) 
 - [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html#getting_started_install)

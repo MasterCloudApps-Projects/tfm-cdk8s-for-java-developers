@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-rabbitmq-deployment
+  namespace: mca-app
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-rabbitmq
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-rabbitmq
+    spec:
+      containers:
+      - name: {{ .Release.Name }}-rabbitmq
+        image: {{ .Values.services.rabbitmq.image }}:{{ .Values.services.rabbitmq.tag }}
+        ports:
+          - containerPort: 5672
+---
+apiVersion: v1 
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-rabbitmq
+  namespace: mca-app
+  labels:
+    app: {{ .Release.Name }}-rabbitmq
+spec:
+  ports:
+  - name: {{ .Release.Name }}-rabbitmq-port
+    protocol: TCP
+    port: 5672
+    targetPort: 5672
+  selector:
+    app: {{ .Release.Name }}-rabbitmq
+  type: ClusterIP

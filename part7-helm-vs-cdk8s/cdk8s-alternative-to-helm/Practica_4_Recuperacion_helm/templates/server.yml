@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-server-deployment
+  namespace: mca-app
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-server
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-server
+    spec:
+      securityContext:
+        runAsUser: 1001
+      containers:
+      - name: {{ .Release.Name }}-server
+        image: {{ .Values.services.server.image }}:{{ .Values.services.server.tag }}
+        ports:
+          - containerPort: 8080
+        env:
+        - name: RABBITMQ_SERVER
+          value: {{ .Release.Name }}-rabbitmq
+        - name: MONGO_SERVER
+          value: {{ .Release.Name }}-mongo
+        - name: MONGO_DATABASE
+          value: database
+        securityContext:
+          allowPrivilegeEscalation: false  
+---
+apiVersion: v1 
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-server
+  namespace: mca-app
+  labels:
+    app: {{ .Release.Name }}-server
+spec:
+  ports:
+  - name: {{ .Release.Name }}-server
+    protocol: TCP
+    port: 8080
+  selector:
+    app: {{ .Release.Name }}-server
+  type: {{ include "serviceType" . }}
+---
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+ name: {{ .Release.Name }}-multi-ingress
+ namespace: mca-app
+ annotations:
+   nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+ rules:
+ - host: {{ .Values.ingress.host }}
+   http:
+     paths:
+     - path: /(.*)
+       pathType: ImplementationSpecific
+       backend:
+         service:
+           name: {{ .Release.Name }}-server
+           port:
+             number: 8080
+{{- end }}

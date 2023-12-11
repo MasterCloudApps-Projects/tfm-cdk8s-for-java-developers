@@ -1,0 +1,93 @@
+{{- if .Values.persistentVolumes.create -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-mongodb-pvc
+  namespace: mca-app
+  labels:
+    app: mongo
+spec:
+  {{- if .Values.persistentVolumes.enableStorageClass }}
+  storageClassName: {{ .Release.Name }}-{{ .Values.persistentVolumes.storageClasses.mongo }}
+  {{- end }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+{{- if .Values.persistentVolumes.enableStorageClass }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Name }}-mongo-pv
+  namespace: mca-app
+  labels:
+    type: local
+    app: mongo
+spec:
+  storageClassName: {{ .Release.Name }}-{{ .Values.persistentVolumes.storageClasses.mongo }}
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/{{ .Release.Name }}-mongodb-data"
+{{- end }}
+{{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-mongo-deployment
+  namespace: mca-app
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-mongo
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-mongo
+    spec:
+      containers:
+      - name: {{ .Release.Name }}-mongo
+        image: {{ .Values.services.mongodb.image }}:{{ .Values.services.mongodb.tag }}
+        ports:
+        - containerPort: 27017
+        - containerPort: 27018
+        - containerPort: 27019
+        volumeMounts:
+        - name: {{ .Release.Name }}-mongo-persistent-storage
+          mountPath: /data/db
+      volumes:
+      - name: {{ .Release.Name }}-mongo-persistent-storage
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-mongodb-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-mongo
+  namespace: mca-app
+  labels:
+    app: {{ .Release.Name }}-mongo
+spec:
+  ports:
+  - port: 27017
+    targetPort: 27017
+    protocol: TCP
+    name: {{ .Release.Name }}-mongo-port-27017
+  - port: 27018
+    targetPort: 27018
+    protocol: TCP
+    name: {{ .Release.Name }}-mongo-port-27018
+  - port: 27019
+    targetPort: 27019
+    protocol: TCP
+    name: {{ .Release.Name }}-mongo-port-27019
+  selector:
+    app: {{ .Release.Name }}-mongo
+  type: ClusterIP
